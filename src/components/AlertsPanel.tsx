@@ -13,9 +13,9 @@ interface Props {
 }
 
 const variantStyles: Record<AlertItem['level'], string> = {
-  info: 'border-sky-200 bg-sky-50 text-sky-800',
-  warning: 'border-amber-200 bg-amber-50 text-amber-800',
-  critical: 'border-rose-200 bg-rose-50 text-rose-800',
+  info: 'border-sky-200 bg-sky-50 text-sky-800 dark:border-sky-700 dark:bg-sky-900 dark:text-sky-200',
+  warning: 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-700 dark:bg-amber-900 dark:text-amber-200',
+  critical: 'border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-700 dark:bg-rose-900 dark:text-rose-200',
 };
 
 const variantIcon: Record<AlertItem['level'], JSX.Element> = {
@@ -31,7 +31,7 @@ export function AlertsPanel({ alerts }: Props) {
 
   return (
     <section className="flex flex-col gap-3">
-      <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-600">
+      <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">
         Alertas
       </h2>
       <div className="flex flex-col gap-3">

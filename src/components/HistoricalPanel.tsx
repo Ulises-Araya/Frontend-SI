@@ -28,12 +28,12 @@ export function HistoricalPanel() {
 
   if (!enabled) {
     return (
-      <section className="rounded-2xl border border-amber-200 bg-amber-50 px-6 py-5 text-amber-900">
+      <section className="rounded-2xl border border-amber-200 bg-amber-50 px-6 py-5 text-amber-900 dark:border-amber-700 dark:bg-amber-900 dark:text-amber-200">
         <h2 className="text-lg font-semibold">Configura Supabase</h2>
         <p className="mt-1 text-sm">
-          Define <code className="rounded bg-amber-200 px-1 py-0.5 font-mono">VITE_SUPABASE_URL</code> y{' '}
-          <code className="rounded bg-amber-200 px-1 py-0.5 font-mono">VITE_SUPABASE_ANON_KEY</code> en
-          <code className="rounded bg-amber-200 px-1 py-0.5 font-mono">Frontend/.env</code> para habilitar el historial.
+          Define <code className="rounded bg-amber-200 px-1 py-0.5 font-mono dark:bg-amber-700">VITE_SUPABASE_URL</code> y{' '}
+          <code className="rounded bg-amber-200 px-1 py-0.5 font-mono dark:bg-amber-700">VITE_SUPABASE_ANON_KEY</code> en
+          <code className="rounded bg-amber-200 px-1 py-0.5 font-mono dark:bg-amber-700">Frontend/.env</code> para habilitar el historial.
         </p>
       </section>
     );
@@ -41,7 +41,7 @@ export function HistoricalPanel() {
 
   if (query.isLoading) {
     return (
-      <div className="rounded-2xl border border-slate-200 bg-white px-6 py-10 text-center text-slate-500">
+      <div className="rounded-2xl border border-slate-200 bg-white px-6 py-10 text-center text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
         Cargando historial...
       </div>
     );
@@ -49,7 +49,7 @@ export function HistoricalPanel() {
 
   if (query.error) {
     return (
-      <div className="rounded-2xl border border-rose-200 bg-rose-50 px-6 py-5 text-rose-700">
+      <div className="rounded-2xl border border-rose-200 bg-rose-50 px-6 py-5 text-rose-700 dark:border-rose-800 dark:bg-rose-900 dark:text-rose-300">
         <p className="font-semibold">No se pudo cargar el historial</p>
         <p className="text-sm">{(query.error as Error).message}</p>
       </div>
@@ -58,7 +58,7 @@ export function HistoricalPanel() {
 
   if (!query.data?.length) {
     return (
-      <div className="rounded-2xl border border-slate-200 bg-white px-6 py-10 text-center text-slate-500">
+      <div className="rounded-2xl border border-slate-200 bg-white px-6 py-10 text-center text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
         Aún no hay eventos guardados en Supabase.
       </div>
     );
@@ -67,59 +67,59 @@ export function HistoricalPanel() {
   return (
     <div className="flex flex-col gap-8">
       <section className="grid gap-5 md:grid-cols-3">
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-card">
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-card dark:border-slate-700 dark:bg-slate-800">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Eventos</p>
-            <Database className="h-5 w-5 text-slate-400" />
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Eventos</p>
+            <Database className="h-5 w-5 text-slate-400 dark:text-slate-500" />
           </div>
-          <p className="mt-2 text-3xl font-bold text-slate-900">{metrics?.totalEvents ?? 0}</p>
-          <p className="text-xs text-slate-500">Total almacenado</p>
+          <p className="mt-2 text-3xl font-bold text-slate-900 dark:text-slate-100">{metrics?.totalEvents ?? 0}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">Total almacenado</p>
         </div>
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-card">
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-card dark:border-slate-700 dark:bg-slate-800">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Última hora</p>
-            <Activity className="h-5 w-5 text-slate-400" />
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Última hora</p>
+            <Activity className="h-5 w-5 text-slate-400 dark:text-slate-500" />
           </div>
-          <p className="mt-2 text-3xl font-bold text-slate-900">{metrics?.eventsLastHour ?? 0}</p>
-          <p className="text-xs text-slate-500">Eventos registrados en los últimos 60 minutos</p>
+          <p className="mt-2 text-3xl font-bold text-slate-900 dark:text-slate-100">{metrics?.eventsLastHour ?? 0}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">Eventos registrados en los últimos 60 minutos</p>
         </div>
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-card">
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-card dark:border-slate-700 dark:bg-slate-800">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Dispositivos</p>
-            <BarChart3 className="h-5 w-5 text-slate-400" />
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Dispositivos</p>
+            <BarChart3 className="h-5 w-5 text-slate-400 dark:text-slate-500" />
           </div>
-          <p className="mt-2 text-3xl font-bold text-slate-900">{metrics?.uniqueDevices ?? 0}</p>
-          <p className="text-xs text-slate-500">IDs únicos que enviaron eventos</p>
+          <p className="mt-2 text-3xl font-bold text-slate-900 dark:text-slate-100">{metrics?.uniqueDevices ?? 0}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">IDs únicos que enviaron eventos</p>
         </div>
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-card">
-        <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-card dark:border-slate-700 dark:bg-slate-800">
+        <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
           Detecciones por carril
         </h3>
         <ul className="mt-4 grid gap-3 text-sm">
           {metrics?.detectionsByLane.map(({ lane, count }) => (
-            <li key={lane} className="flex items-center justify-between rounded-xl bg-slate-100/70 px-4 py-3">
-              <span className="font-semibold capitalize text-slate-700">{lane}</span>
-              <span className="font-mono text-slate-600">{count}</span>
+            <li key={lane} className="flex items-center justify-between rounded-xl bg-slate-100/70 px-4 py-3 dark:bg-slate-700/70">
+              <span className="font-semibold capitalize text-slate-700 dark:text-slate-300">{lane}</span>
+              <span className="font-mono text-slate-600 dark:text-slate-400">{count}</span>
             </li>
           ))}
         </ul>
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-card">
-        <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-card dark:border-slate-700 dark:bg-slate-800">
+        <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
           Últimos eventos persistidos
         </h3>
         <div className="mt-4 grid gap-3">
           {query.data.slice(0, 12).map((event) => (
             <article
               key={event.id}
-              className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700"
+              className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-300"
             >
               <header className="flex flex-wrap items-center justify-between gap-2">
-                <div className="flex items-center gap-2 text-xs text-slate-500">
-                  <span className="font-semibold text-slate-700">
+                <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                  <span className="font-semibold text-slate-700 dark:text-slate-300">
                     {new Date(event.received_at).toLocaleString()}
                   </span>
                   <span>·</span>
@@ -128,12 +128,12 @@ export function HistoricalPanel() {
                   </span>
                 </div>
                 {event.intersection_id ? (
-                  <span className="rounded-full bg-slate-200 px-2 py-1 text-[10px] font-semibold uppercase text-slate-600">
+                  <span className="rounded-full bg-slate-200 px-2 py-1 text-[10px] font-semibold uppercase text-slate-600 dark:bg-slate-600 dark:text-slate-300">
                     {event.intersection_id}
                   </span>
                 ) : null}
               </header>
-              <p className="mt-2 text-xs text-slate-600">{formatSensors(event.sensors)}</p>
+              <p className="mt-2 text-xs text-slate-600 dark:text-slate-400">{formatSensors(event.sensors)}</p>
             </article>
           ))}
         </div>
