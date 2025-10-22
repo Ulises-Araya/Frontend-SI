@@ -28,12 +28,24 @@ function formatDistance(distance: number | null): string {
   return `${(distance as number).toFixed(1)} cm`;
 }
 
+function TrafficLightVisual({ state }: { state: LaneState['state'] }) {
+  return (
+    <div className="flex flex-col items-center gap-1 bg-gray-800 p-2 rounded-lg w-12 h-20 border border-gray-600">
+      <div className={`w-6 h-6 rounded-full ${state === 'red' || state === 'red_yellow' ? 'bg-red-500 shadow-lg' : 'bg-gray-600'}`}></div>
+      <div className={`w-6 h-6 rounded-full ${state === 'yellow' || state === 'red_yellow' ? 'bg-yellow-500 shadow-lg' : 'bg-gray-600'}`}></div>
+      <div className={`w-6 h-6 rounded-full ${state === 'green' ? 'bg-green-500 shadow-lg' : 'bg-gray-600'}`}></div>
+    </div>
+  );
+}
+
 function stateClasses(state: LaneState['state']): string {
   switch (state) {
     case 'green':
       return 'border-green-500 bg-green-500/10 text-green-700 dark:border-green-400 dark:bg-green-500/20 dark:text-green-300';
     case 'yellow':
       return 'border-amber-400 bg-amber-400/10 text-amber-600 dark:border-amber-300 dark:bg-amber-400/20 dark:text-amber-300';
+    case 'red_yellow':
+      return 'border-red-500 bg-red-500/10 text-red-700 dark:border-red-400 dark:bg-red-500/20 dark:text-red-300';
     case 'red':
     default:
       return 'border-rose-500 bg-rose-500/10 text-rose-600 dark:border-rose-400 dark:bg-rose-500/20 dark:text-rose-300';
@@ -58,15 +70,7 @@ export function LaneCard({ lane, index }: Props) {
           <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Semáforo {index + 1}</p>
           <h3 className="text-2xl font-semibold capitalize text-slate-900 dark:text-slate-100">{lane.id}</h3>
         </div>
-        <span
-          className={clsx(
-            'flex items-center gap-2 rounded-full border px-3 py-1 text-sm font-semibold uppercase tracking-wide',
-            stateClasses(lane.state),
-          )}
-        >
-          <GaugeCircle className="h-4 w-4" />
-          {lane.state}
-        </span>
+        <TrafficLightVisual state={lane.state} />
       </header>
 
       <dl className="grid grid-cols-2 gap-4 text-sm">

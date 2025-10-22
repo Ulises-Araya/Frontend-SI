@@ -56,54 +56,17 @@ export function buildAlerts(
   traffic: TrafficStateResponse | null,
   lastUpdated: number | null,
   now: number,
+  sseConnected: boolean,
 ): AlertItem[] {
   const alerts: AlertItem[] = [];
 
-  if (!traffic) {
+  // Solo alerta cuando se pierde la conexión SSE con el backend
+  if (!sseConnected) {
     alerts.push({
-      id: 'no-data',
-      level: 'info',
-      title: 'Aún no se reciben datos del backend',
-      description: 'Envía eventos desde el ESP32 o revisa la conexión.',
-    });
-    return alerts;
-  }
-
-  if (lastUpdated != null) {
-    const diffSeconds = Math.round((now - lastUpdated) / 1000);
-    if (diffSeconds > 5) {
-      alerts.push({
-        id: 'stale-data',
-        level: diffSeconds > 15 ? 'critical' : 'warning',
-        title: `Sin nuevas lecturas desde hace ${diffSeconds} s`,
-        description: 'Verifica la conexión serial o el WiFi del dispositivo.',
-      });
-    }
-  }
-
-  const maxRedMs = Number(traffic.config?.maxRedMs ?? traffic.config?.MAX_RED_MS ?? 0);
-  const maxRedSeconds = maxRedMs / 1000;
-
-  for (const lane of traffic.lanes) {
-    if (lane.redSince && lane.waiting) {
-      const redSeconds = Math.round((now - lane.redSince) / 1000);
-      if (maxRedSeconds && redSeconds > maxRedSeconds) {
-        alerts.push({
-          id: `overdue-${lane.id}`,
-          level: 'critical',
-          title: `El carril ${lane.id} supera el máximo en rojo (${redSeconds}s)`,
-          description: 'La cola de prioridad se atenderá en cuanto el carril actual quede libre.',
-        });
-      }
-    }
-  }
-
-  if (traffic.queue.length > 0) {
-    alerts.push({
-      id: 'queue-non-empty',
-      level: 'info',
-      title: `Cola de prioridad activa (${traffic.queue.length} carriles en espera)`,
-      description: `Orden actual: ${traffic.queue.join(' → ')}`,
+      id: 'backend-disconnected',
+      level: 'critical',
+      title: 'Conexión perdida con el backend',
+      description: 'No se puede recibir actualizaciones en tiempo real.',
     });
   }
 

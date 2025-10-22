@@ -7,10 +7,7 @@ import {
   LineChart,
   Loader2,
   Moon,
-  RefreshCw,
   Sun,
-  ToggleLeft,
-  ToggleRight,
   Wifi,
   WifiOff,
 } from 'lucide-react';
@@ -18,8 +15,7 @@ import { fetchSnapshot, getApiBaseUrl, getBackendBaseUrl } from './api/client';
 import type { CompositeSnapshot, LaneState } from './api/types';
 import LaneCard from './components/LaneCard';
 import AlertsPanel, { buildAlerts } from './components/AlertsPanel';
-import HistoricalPanel from './components/HistoricalPanel';
-import Sidebar from './components/Sidebar';
+import { Analysis } from './components/Analysis';
 import { getSupabaseClient, hasSupabaseConfig } from './supabase/client';
 
 function formatQueue(queue: string[] | undefined): string {
@@ -30,8 +26,7 @@ function formatQueue(queue: string[] | undefined): string {
 }
 
 export default function App() {
-  const [autoRefresh, setAutoRefresh] = useState(true);
-  const [activeTab, setActiveTab] = useState<'realtime' | 'history'>('realtime');
+  const [activeTab, setActiveTab] = useState<'realtime' | 'analysis'>('realtime');
   const [now, setNow] = useState(() => Date.now());
   const [sseConnected, setSseConnected] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(() => {
@@ -42,7 +37,6 @@ export default function App() {
     setIsDarkMode(!isDarkMode);
   };
   const [activePage, setActivePage] = useState<'home' | 'analysis'>('home');
-  const [sidebarVisible, setSidebarVisible] = useState(false);
 
   useEffect(() => {
     const interval = window.setInterval(() => setNow(Date.now()), 1000);
@@ -71,7 +65,7 @@ export default function App() {
       }
       return result;
     },
-    refetchInterval: activeTab === 'realtime' && autoRefresh ? 2000 : false,
+    refetchInterval: activeTab === 'realtime' ? 2000 : false,  // Siempre polling en realtime
   });
 
   const supabaseEnabled = hasSupabaseConfig();
@@ -144,25 +138,17 @@ export default function App() {
   const backendUrl = useMemo(() => getBackendBaseUrl(), []);
 
   const lastUpdatedAt = traffic?.timestamp ?? null;
-  const alerts = useMemo(() => buildAlerts(traffic, lastUpdatedAt, now), [traffic, lastUpdatedAt, now]);
+  const alerts = useMemo(() => buildAlerts(traffic, lastUpdatedAt, now, sseConnected), [traffic, lastUpdatedAt, now, sseConnected]);
 
   return (
     <div className={`min-h-screen ${isDarkMode ? 'bg-slate-900 text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
-      <div className="fixed left-0 top-0 w-8 h-full z-10" onMouseEnter={() => setSidebarVisible(true)} />
-      <Sidebar isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} isVisible={sidebarVisible} onMouseEnter={() => setSidebarVisible(true)} onMouseLeave={() => setSidebarVisible(false)} />
       <main className={`flex-1 overflow-auto ${isDarkMode ? 'bg-slate-900' : 'bg-slate-50'}`}>
         <div className="mx-auto max-w-6xl flex flex-col gap-8 px-6 py-10">
       <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-sm font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
-            {activeTab === 'realtime' ? 'Panel en tiempo real' : 'Analítica histórica'}
-          </p>
           <h1 className="text-3xl font-bold text-black dark:text-slate-100">
             Semáforo inteligente – tablero de pruebas
           </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            Backend activo en <span className="font-mono text-slate-700 dark:text-slate-300">{backendUrl}</span>
-          </p>
         </div>
         <div className="flex items-center gap-3">
           <button
@@ -181,36 +167,6 @@ export default function App() {
                 <Moon className="h-3 w-3 text-slate-600" />
               )}
             </span>
-          </button>
-          <button
-            type="button"
-            onClick={() => query.refetch()}
-            disabled={query.isFetching}
-            className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-lg transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-300"
-          >
-            {query.isFetching ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <RefreshCw className="h-4 w-4" />
-            )}
-            Actualizar
-          </button>
-          <button
-            type="button"
-            onClick={() => setAutoRefresh((value: boolean) => !value)}
-            disabled={activeTab !== 'realtime'}
-            className={
-              activeTab === 'realtime'
-                ? 'inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition border-slate-300 text-slate-700 hover:border-slate-500 hover:text-slate-900 dark:border-slate-600 dark:text-slate-300 dark:hover:border-slate-500 dark:hover:text-slate-100'
-                : 'inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition cursor-not-allowed border-slate-200 text-slate-400 dark:border-slate-700 dark:text-slate-500'
-            }
-          >
-            {autoRefresh ? (
-              <ToggleRight className="h-4 w-4 text-emerald-500" />
-            ) : (
-              <ToggleLeft className="h-4 w-4 text-slate-400" />
-            )}
-            Auto ({autoRefresh ? 'ON' : 'OFF'})
           </button>
           <span
             className={
@@ -243,18 +199,18 @@ export default function App() {
           </button>
           <button
             type="button"
-            onClick={() => setActiveTab('history')}
+            onClick={() => setActiveTab('analysis')}
             className={
-              activeTab === 'history' ? 'inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition bg-slate-900 text-white shadow dark:bg-slate-100 dark:text-slate-900' : 'inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition text-slate-600 dark:text-slate-400'
+              activeTab === 'analysis' ? 'inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition bg-slate-900 text-white shadow dark:bg-slate-100 dark:text-slate-900' : 'inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition text-slate-600 dark:text-slate-400'
             }
           >
             <LineChart className="h-4 w-4" />
-            Histórico
+            Análisis
           </button>
         </div>
-        {!supabaseEnabled && activeTab === 'history' ? (
+        {!supabaseEnabled && activeTab === 'analysis' ? (
           <span className="text-xs text-amber-600">
-            Configura Supabase para habilitar el historial.
+            Configura Supabase para habilitar el análisis.
           </span>
         ) : null}
       </div>
@@ -282,12 +238,49 @@ export default function App() {
               <p className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 Estado general
               </p>
-              <p className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-                {traffic ? 'Recibiendo datos del controlador' : 'En espera de datos'}
-              </p>
-              {lastUpdatedAt ? (
-                <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  {sseConnected ? (
+                    <Wifi className="h-4 w-4 text-green-500" />
+                  ) : (
+                    <WifiOff className="h-4 w-4 text-red-500" />
+                  )}
+                  <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                    {sseConnected ? 'Conectado al backend' : 'Backend desconectado'}
+                  </p>
+                </div>
+                {traffic?.databaseConnected !== undefined && (
+                  <div className="flex items-center gap-2">
+                    {traffic.databaseConnected ? (
+                      <div className="h-2 w-2 rounded-full bg-green-500" />
+                    ) : (
+                      <div className="h-2 w-2 rounded-full bg-red-500" />
+                    )}
+                    <p className="text-sm text-slate-700 dark:text-slate-300">
+                      Base de datos: {traffic.databaseConnected ? 'Conectada' : 'Desconectada'}
+                    </p>
+                  </div>
+                )}
+                {traffic?.esp32Connected !== undefined && (
+                  <div className="flex items-center gap-2">
+                    {traffic.esp32Connected ? (
+                      <div className="h-2 w-2 rounded-full bg-green-500" />
+                    ) : (
+                      <div className="h-2 w-2 rounded-full bg-red-500" />
+                    )}
+                    <p className="text-sm text-slate-700 dark:text-slate-300">
+                      ESP32: {traffic.esp32Connected ? 'Conectado' : 'Desconectado'}
+                    </p>
+                  </div>
+                )}
+              </div>
+              {traffic && lastUpdatedAt ? (
+                <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
                   Última actualización {new Date(lastUpdatedAt).toLocaleTimeString()}
+                </p>
+              ) : sseConnected ? (
+                <p className="mt-3 text-xs text-amber-600 dark:text-amber-400">
+                  Esperando datos del controlador...
                 </p>
               ) : null}
             </div>
@@ -310,18 +303,10 @@ export default function App() {
               </div>
             )}
           </section>
-
-          <section>
-            <h2 className="mb-3 text-lg font-semibold text-slate-800 dark:text-slate-200">Telemetría del controlador</h2>
-            <p className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
-              La información en tiempo real proviene directamente del backend mediante Server-Sent Events
-              (SSE). Aquí se muestran únicamente los estados del controlador y de sus carriles.
-            </p>
-          </section>
         </>
       ) : null}
 
-      {activeTab === 'history' ? <HistoricalPanel /> : null}
+      {activeTab === 'analysis' ? <Analysis /> : null}
 
             <footer className="flex flex-col items-start justify-between gap-3 border-t border-slate-200 pt-6 text-xs text-slate-500 dark:border-slate-700 dark:text-slate-400 sm:flex-row sm:items-center">
               <p>

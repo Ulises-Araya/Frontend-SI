@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import App from './App';
-import AnalysisPage from './pages/AnalysisPage';
+import { Analysis } from './components/Analysis';
 import './styles.css';
 
 const queryClient = new QueryClient({
@@ -22,7 +22,7 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<App />} />
-          <Route path="/analisis" element={<AnalysisPage />} />
+          <Route path="/analisis" element={<Analysis />} />
         </Routes>
       </BrowserRouter>
     </QueryClientProvider>

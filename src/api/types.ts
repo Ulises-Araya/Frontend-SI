@@ -1,4 +1,4 @@
-export type LightState = 'green' | 'yellow' | 'red';
+export type LightState = 'green' | 'yellow' | 'red' | 'red_yellow';
 
 export interface LaneState {
   id: string;
@@ -19,6 +19,8 @@ export interface TrafficStateResponse {
   lanes: LaneState[];
   queue: string[];
   config: Record<string, unknown>;
+  databaseConnected: boolean;
+  esp32Connected: boolean;
 }
 
 export interface CompositeSnapshot {
