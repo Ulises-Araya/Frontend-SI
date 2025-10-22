@@ -1,4 +1,4 @@
-import type { CompositeSnapshot, TrafficStateResponse } from './types';
+import type { AnalyticsOverview, CompositeSnapshot, TrafficStateResponse } from './types';
 
 const DEFAULT_BACKEND_URL = 'http://localhost:3000';
 
@@ -50,6 +50,10 @@ async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
 export async function fetchSnapshot(): Promise<CompositeSnapshot> {
   const traffic = await fetchJson<TrafficStateResponse>('/api/traffic/lights');
   return { traffic };
+}
+
+export async function fetchAnalyticsOverview(): Promise<AnalyticsOverview> {
+  return fetchJson<AnalyticsOverview>('/api/analytics/overview');
 }
 
 export function getBackendBaseUrl(): string {

@@ -24,3 +24,41 @@ export interface TrafficStateResponse {
 export interface CompositeSnapshot {
   traffic: TrafficStateResponse | null;
 }
+
+export interface PhaseTransitionCount {
+  laneKey: string;
+  toState: 'green' | 'red';
+  count: number;
+}
+
+export interface LaneDurationSummary {
+  laneKey: string;
+  greenMs: number;
+  redMs: number;
+}
+
+export interface GreenShareSummary {
+  laneKey: string;
+  greenRatio: number;
+}
+
+export interface PresenceSample {
+  laneKey: string;
+  waitMs: number;
+  detectedAt: string;
+}
+
+export interface GreenCycleTrendPoint {
+  bucket: string;
+  avgGreenMs: number;
+  sampleCount: number;
+}
+
+export interface AnalyticsOverview {
+  intersectionId: string;
+  transitionCounts: PhaseTransitionCount[];
+  laneDurations: LaneDurationSummary[];
+  greenShare: GreenShareSummary[];
+  presenceSamples: PresenceSample[];
+  greenCycleTrend: GreenCycleTrendPoint[];
+}
