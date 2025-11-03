@@ -5,6 +5,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import App from './App';
 import { Analysis } from './components/Analysis';
 import './styles.css';
+import 'leaflet/dist/leaflet.css';
 
 const queryClient = new QueryClient({
   defaultOptions: {

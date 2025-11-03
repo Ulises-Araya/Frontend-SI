@@ -74,7 +74,7 @@ export function LaneCard({ lane, index }: Props) {
       </header>
 
       <dl className="grid grid-cols-2 gap-4 text-sm">
-        <div className="flex items-center gap-2 rounded-xl bg-slate-100/70 px-3 py-2 dark:bg-slate-700/70">
+        <div className="flex items-center gap-2 rounded-xl bg-slate-100/70 px-2 py-2 dark:bg-slate-700/70">
           <Radar className="h-4 w-4 text-slate-500 dark:text-slate-400" />
           <div>
             <dt className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
@@ -85,7 +85,7 @@ export function LaneCard({ lane, index }: Props) {
             </dd>
           </div>
         </div>
-        <div className="flex items-center gap-2 rounded-xl bg-slate-100/70 px-3 py-2 dark:bg-slate-700/70">
+        <div className="flex items-center gap-2 rounded-xl bg-slate-100/70 px-2 py-2 dark:bg-slate-700/70">
           <Car className="h-4 w-4 text-slate-500 dark:text-slate-400" />
           <div>
             <dt className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
@@ -96,7 +96,7 @@ export function LaneCard({ lane, index }: Props) {
             </dd>
           </div>
         </div>
-        <div className="flex items-center gap-2 rounded-xl bg-slate-100/70 px-3 py-2 dark:bg-slate-700/70">
+        <div className="flex items-center gap-2 rounded-xl bg-slate-100/70 px-2 py-2 dark:bg-slate-700/70">
           <Clock className="h-4 w-4 text-slate-500 dark:text-slate-400" />
           <div>
             <dt className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
@@ -107,7 +107,7 @@ export function LaneCard({ lane, index }: Props) {
             </dd>
           </div>
         </div>
-        <div className="flex items-center gap-2 rounded-xl bg-slate-100/70 px-3 py-2 dark:bg-slate-700/70">
+        <div className="flex items-center gap-2 rounded-xl bg-slate-100/70 px-2 py-2 dark:bg-slate-700/70">
           <Hourglass className="h-4 w-4 text-slate-500 dark:text-slate-400" />
           <div>
             <dt className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">

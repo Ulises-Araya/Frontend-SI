@@ -1,4 +1,12 @@
-import type { AnalyticsOverview, CompositeSnapshot, TrafficStateResponse } from './types';
+import type {
+  AnalyticsOverview,
+  CompositeSnapshot,
+  TrafficStateResponse,
+  IntersectionsListResponse,
+  CreateIntersectionPayload,
+  IntersectionMutationResponse,
+  IntersectionStatus,
+} from './types';
 
 const DEFAULT_BACKEND_URL = 'http://localhost:3000';
 
@@ -22,6 +30,11 @@ function resolveBaseUrl(): string {
 }
 
 const baseUrl = resolveBaseUrl();
+
+export interface IntersectionsFilters {
+  status?: IntersectionStatus;
+  ids?: string[];
+}
 
 async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
   let url = baseUrl ? `${baseUrl}${path}` : path;
@@ -47,13 +60,78 @@ async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-export async function fetchSnapshot(): Promise<CompositeSnapshot> {
-  const traffic = await fetchJson<TrafficStateResponse>('/api/traffic/lights');
+export async function fetchSnapshot(intersectionId?: string | null): Promise<CompositeSnapshot> {
+  const params = new URLSearchParams();
+  if (intersectionId) {
+    params.set('intersectionId', intersectionId);
+  }
+  const path = params.size ? `/api/traffic/lights?${params.toString()}` : '/api/traffic/lights';
+
+  const traffic = await fetchJson<TrafficStateResponse>(path);
   return { traffic };
 }
 
-export async function fetchAnalyticsOverview(): Promise<AnalyticsOverview> {
-  return fetchJson<AnalyticsOverview>('/api/analytics/overview');
+export async function fetchAnalyticsOverview(intersectionId?: string | null): Promise<AnalyticsOverview> {
+  const params = new URLSearchParams();
+  if (intersectionId) {
+    params.set('intersectionId', intersectionId);
+  }
+  const query = params.toString();
+  const path = query ? `/api/analytics/overview?${query}` : '/api/analytics/overview';
+  return fetchJson<AnalyticsOverview>(path);
+}
+
+export async function fetchIntersections(filters: IntersectionsFilters = {}): Promise<IntersectionsListResponse> {
+  const params = new URLSearchParams();
+
+  if (filters.status) {
+    params.set('status', filters.status);
+  }
+
+  if (filters.ids && filters.ids.length > 0) {
+    params.set('ids', filters.ids.join(','));
+  }
+
+  const query = params.toString();
+  const path = query ? `/api/intersections?${query}` : '/api/intersections';
+
+  return fetchJson<IntersectionsListResponse>(path);
+}
+
+export async function createIntersection(payload: CreateIntersectionPayload): Promise<IntersectionMutationResponse> {
+  return fetchJson<IntersectionMutationResponse>('/api/intersections', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function updateIntersectionStatus(
+  intersectionId: string,
+  status: IntersectionStatus,
+): Promise<IntersectionMutationResponse> {
+  if (!intersectionId) {
+    throw new Error('intersectionId es obligatorio');
+  }
+
+  return fetchJson<IntersectionMutationResponse>(`/api/intersections/${intersectionId}/status`, {
+    method: 'PUT',
+    body: JSON.stringify({ status }),
+  });
+}
+
+export async function updateIntersectionCoords(
+  intersectionId: string,
+  latitude: number,
+  longitude: number,
+): Promise<IntersectionMutationResponse> {
+  if (!intersectionId) {
+    throw new Error('intersectionId es obligatorio');
+  }
+
+  return fetchJson<IntersectionMutationResponse>(`/api/intersections/${intersectionId}`, {
+    method: 'PUT',
+    body: JSON.stringify({ latitude, longitude }),
+  });
 }
 
 export function getBackendBaseUrl(): string {

@@ -1,5 +1,46 @@
 export type LightState = 'green' | 'yellow' | 'red' | 'red_yellow';
 
+export type IntersectionStatus = 'operational' | 'maintenance' | 'stopped';
+
+export type JsonObject = Record<string, unknown>;
+
+export interface IntersectionRecord {
+  id: string;
+  name: string;
+  latitude: number | null;
+  longitude: number | null;
+  status: IntersectionStatus;
+  last_seen: string | null;
+  location: JsonObject | null;
+  meta: JsonObject | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface IntersectionsListResponse {
+  intersections: IntersectionRecord[];
+  statusOptions: IntersectionStatus[];
+  persistenceDisabled?: boolean;
+}
+
+export interface IntersectionMutationResponse {
+  intersection: IntersectionRecord;
+  statusOptions: IntersectionStatus[];
+}
+
+export interface CreateIntersectionPayload {
+  name: string;
+  status?: IntersectionStatus;
+  latitude?: number;
+  longitude?: number;
+  location?: JsonObject | null;
+  meta?: JsonObject | null;
+}
+
+export interface UpdateIntersectionStatusPayload {
+  status: IntersectionStatus;
+}
+
 export interface LaneState {
   id: string;
   state: LightState;
@@ -21,6 +62,7 @@ export interface TrafficStateResponse {
   config: Record<string, unknown>;
   databaseConnected: boolean;
   esp32Connected: boolean;
+  intersectionId?: string | null;
 }
 
 export interface CompositeSnapshot {
