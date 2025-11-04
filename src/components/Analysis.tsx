@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import {
   ResponsiveContainer,
   BarChart,
@@ -120,24 +120,115 @@ function formatPercentage(value: number): string {
 }
 
 export function Analysis({ intersectionId, intersectionName }: { intersectionId?: string | null; intersectionName?: string }) {
-  const analyticsQuery = useQuery({
+  const analyticsQuery = useQuery<AnalyticsOverview, Error>({
     queryKey: ['analytics-overview', intersectionId],
     queryFn: () => fetchAnalyticsOverview(intersectionId),
     refetchInterval: 1_000,
     refetchOnWindowFocus: false,
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
   });
 
   const laneKeys = useMemo(() => buildLaneKeys(analyticsQuery.data), [analyticsQuery.data]);
 
-  const transitionDataset = useMemo(
+  const presenceSamples = analyticsQuery.data?.presenceSamples ?? [];
+
+  const rawTransitionDataset = useMemo(
     () => buildTransitionDataset(analyticsQuery.data?.transitionCounts ?? [], laneKeys),
     [analyticsQuery.data?.transitionCounts, laneKeys],
   );
 
+  const [presenceEventsCount, setPresenceEventsCount] = useState(0);
+  const presenceTrackerRef = useRef<{
+    intersectionKey: string;
+    seen: Set<string>;
+    total: number;
+  }>({
+    intersectionKey: '__init__',
+    seen: new Set<string>(),
+    total: 0,
+  });
+
+  useEffect(() => {
+    const intersectionKey = intersectionId ?? '__default__';
+    const tracker = presenceTrackerRef.current;
+    const shouldReset = tracker.intersectionKey !== intersectionKey;
+    if (shouldReset) {
+      tracker.intersectionKey = intersectionKey;
+      tracker.total = 0;
+      tracker.seen = new Set<string>();
+    }
+
+    let changed = shouldReset;
+    for (const sample of presenceSamples) {
+      const uniqueKey = `${sample.laneKey}::${sample.detectedAt}`;
+      if (!tracker.seen.has(uniqueKey)) {
+        tracker.seen.add(uniqueKey);
+        tracker.total += 1;
+        changed = true;
+      }
+    }
+
+    if (changed) {
+      setPresenceEventsCount(tracker.total);
+    }
+  }, [presenceSamples, intersectionId]);
+
+  const displayedPresenceEvents = Math.max(presenceEventsCount, presenceSamples.length);
+
+  const [cumulativeTransitionCounts, setCumulativeTransitionCounts] = useState<Record<string, number>>({});
+  const transitionTrackerRef = useRef<{
+    intersectionKey: string;
+    counts: Record<string, number>;
+  }>({
+    intersectionKey: '__init__',
+    counts: {},
+  });
+
+  useEffect(() => {
+    const intersectionKey = intersectionId ?? '__default__';
+    const tracker = transitionTrackerRef.current;
+    const shouldReset = tracker.intersectionKey !== intersectionKey;
+    if (shouldReset) {
+      tracker.intersectionKey = intersectionKey;
+      tracker.counts = {};
+    }
+
+    let changed = shouldReset;
+    for (const entry of rawTransitionDataset) {
+      const previous = tracker.counts[entry.laneKey] ?? 0;
+      const next = shouldReset ? entry.changes : Math.max(entry.changes, previous);
+      if (next !== previous) {
+        tracker.counts[entry.laneKey] = next;
+        changed = true;
+      }
+    }
+
+    const laneSet = new Set(rawTransitionDataset.map((entry) => entry.laneKey));
+    Object.keys(tracker.counts).forEach((laneKey) => {
+      if (!laneSet.has(laneKey)) {
+        delete tracker.counts[laneKey];
+        changed = true;
+      }
+    });
+
+    if (changed) {
+      setCumulativeTransitionCounts({ ...tracker.counts });
+    }
+  }, [rawTransitionDataset, intersectionId]);
+
+  const transitionChartDataset = useMemo(() => {
+    if (Object.keys(cumulativeTransitionCounts).length === 0) {
+      return rawTransitionDataset;
+    }
+    return laneKeys.map((laneKey) => ({
+      laneKey,
+      changes: cumulativeTransitionCounts[laneKey] ?? 0,
+    }));
+  }, [cumulativeTransitionCounts, laneKeys, rawTransitionDataset]);
+
   const waitHistogramDataset = useMemo(
-    () => buildWaitHistogram(analyticsQuery.data?.presenceSamples ?? [], laneKeys),
-    [analyticsQuery.data?.presenceSamples, laneKeys],
+    () => buildWaitHistogram(presenceSamples, laneKeys),
+    [presenceSamples, laneKeys],
   );
 
   const durationDataset = useMemo(
@@ -182,7 +273,7 @@ export function Analysis({ intersectionId, intersectionName }: { intersectionId?
                 <p className="text-sm font-medium text-slate-600 dark:text-slate-300">Transiciones registradas</p>
               </div>
               <p className="text-3xl font-semibold text-slate-900 dark:text-slate-100">
-                {analyticsQuery.data.transitionCounts.reduce((acc, item) => acc + item.count, 0)}
+                {analyticsQuery.data?.transitionCounts.reduce((acc: number, item: PhaseTransitionCount) => acc + item.count, 0) ?? 0}
               </p>
             </div>
             <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-card dark:border-slate-700 dark:bg-slate-800">
@@ -193,7 +284,7 @@ export function Analysis({ intersectionId, intersectionName }: { intersectionId?
                 <p className="text-sm font-medium text-slate-600 dark:text-slate-300">Eventos de espera analizados</p>
               </div>
               <p className="text-3xl font-semibold text-slate-900 dark:text-slate-100">
-                {analyticsQuery.data.presenceSamples.length}
+                {displayedPresenceEvents}
               </p>
             </div>
             <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-card dark:border-slate-700 dark:bg-slate-800">
@@ -215,7 +306,7 @@ export function Analysis({ intersectionId, intersectionName }: { intersectionId?
               <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-card dark:border-slate-700 dark:bg-slate-800">
                 <div className="h-72">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={transitionDataset}>
+                    <BarChart data={transitionChartDataset}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                       <XAxis dataKey="laneKey" stroke="#475569" />
                       <YAxis stroke="#475569" allowDecimals={false} />
@@ -269,7 +360,7 @@ export function Analysis({ intersectionId, intersectionName }: { intersectionId?
                       <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                       <XAxis dataKey="laneKey" stroke="#475569" />
                       <YAxis stroke="#475569" />
-                      <Tooltip />
+                      <Tooltip formatter={(value: number | string, name) => [`${Number(value).toFixed(1)} s`, name]} />
                       <Legend />
                       <Bar dataKey="greenSeconds" stackId="time" name="Tiempo en verde (s)" fill="#22c55e" radius={[4, 4, 0, 0]} />
                       <Bar dataKey="redSeconds" stackId="time" name="Tiempo en rojo (s)" fill="#ef4444" radius={[4, 4, 0, 0]} />
