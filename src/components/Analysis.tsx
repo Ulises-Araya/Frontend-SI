@@ -125,6 +125,7 @@ export function Analysis({ intersectionId, intersectionName }: { intersectionId?
     queryFn: () => fetchAnalyticsOverview(intersectionId),
     refetchInterval: 1_000,
     refetchOnWindowFocus: false,
+    keepPreviousData: true,
   });
 
   const laneKeys = useMemo(() => buildLaneKeys(analyticsQuery.data), [analyticsQuery.data]);
