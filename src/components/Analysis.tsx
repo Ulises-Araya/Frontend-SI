@@ -52,11 +52,9 @@ function buildLaneKeys(data: AnalyticsOverview | undefined): string[] {
 function buildTransitionDataset(transitionCounts: PhaseTransitionCount[], laneKeys: string[]) {
   return laneKeys.map((laneKey) => {
     const toGreen = transitionCounts.find((item) => item.laneKey === laneKey && item.toState === 'green');
-    const toRed = transitionCounts.find((item) => item.laneKey === laneKey && item.toState === 'red');
     return {
       laneKey,
-      toGreen: toGreen?.count ?? 0,
-      toRed: toRed?.count ?? 0,
+      changes: toGreen?.count ?? 0,
     };
   });
 }
@@ -125,7 +123,7 @@ export function Analysis({ intersectionId, intersectionName }: { intersectionId?
   const analyticsQuery = useQuery({
     queryKey: ['analytics-overview', intersectionId],
     queryFn: () => fetchAnalyticsOverview(intersectionId),
-    refetchInterval: 60_000,
+    refetchInterval: 1_000,
     refetchOnWindowFocus: false,
   });
 
@@ -212,7 +210,7 @@ export function Analysis({ intersectionId, intersectionName }: { intersectionId?
 
           <section className="grid gap-6 xl:grid-cols-2">
             <div>
-              <h2 className="mb-4 text-lg font-semibold text-slate-800 dark:text-slate-100">Cambios por estado (histograma)</h2>
+              <h2 className="mb-4 text-lg font-semibold text-slate-800 dark:text-slate-100">Cambios a verde por semáforo</h2>
               <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-card dark:border-slate-700 dark:bg-slate-800">
                 <div className="h-72">
                   <ResponsiveContainer width="100%" height="100%">
@@ -220,10 +218,12 @@ export function Analysis({ intersectionId, intersectionName }: { intersectionId?
                       <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                       <XAxis dataKey="laneKey" stroke="#475569" />
                       <YAxis stroke="#475569" allowDecimals={false} />
-                      <Tooltip formatter={(value: number) => [value, 'Cambios']} labelFormatter={(label) => `Carril ${label}`} />
+                      <Tooltip
+                        formatter={(value: number) => [value, 'Cambios a verde']}
+                        labelFormatter={(label) => `Carril ${label}`}
+                      />
                       <Legend />
-                      <Bar dataKey="toGreen" name="Pasadas a verde" fill="#0ea5e9" radius={[4, 4, 0, 0]} />
-                      <Bar dataKey="toRed" name="Pasadas a rojo" fill="#f97316" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="changes" name="Pasadas a verde" fill="#0ea5e9" radius={[4, 4, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
