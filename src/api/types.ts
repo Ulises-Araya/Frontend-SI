@@ -98,6 +98,10 @@ export interface GreenCycleTrendPoint {
   sampleCount: number;
 }
 
+export interface AnalyticsTotals {
+  transitions: number;
+}
+
 export interface AnalyticsOverview {
   intersectionId: string;
   transitionCounts: PhaseTransitionCount[];
@@ -105,4 +109,5 @@ export interface AnalyticsOverview {
   greenShare: GreenShareSummary[];
   presenceSamples: PresenceSample[];
   greenCycleTrend: GreenCycleTrendPoint[];
+  totals?: AnalyticsTotals;
 }

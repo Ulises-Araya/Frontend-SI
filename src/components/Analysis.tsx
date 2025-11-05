@@ -226,7 +226,12 @@ export function Analysis({ intersectionId, intersectionName }: { intersectionId?
     }));
   }, [cumulativeTransitionCounts, laneKeys, rawTransitionDataset]);
 
+  const totalTransitionsFromApi = analyticsQuery.data?.totals?.transitions;
+
   const totalTransitions = useMemo(() => {
+    if (typeof totalTransitionsFromApi === 'number' && Number.isFinite(totalTransitionsFromApi)) {
+      return totalTransitionsFromApi;
+    }
     if (laneKeys.length === 0) {
       return rawTransitionDataset.reduce((accumulator, item) => accumulator + item.changes, 0);
     }
@@ -234,7 +239,7 @@ export function Analysis({ intersectionId, intersectionName }: { intersectionId?
       return rawTransitionDataset.reduce((accumulator, item) => accumulator + item.changes, 0);
     }
     return laneKeys.reduce((accumulator, laneKey) => accumulator + (cumulativeTransitionCounts[laneKey] ?? 0), 0);
-  }, [laneKeys, cumulativeTransitionCounts, rawTransitionDataset]);
+  }, [totalTransitionsFromApi, laneKeys, cumulativeTransitionCounts, rawTransitionDataset]);
 
   const waitHistogramDataset = useMemo(
     () => buildWaitHistogram(presenceSamples, laneKeys),
