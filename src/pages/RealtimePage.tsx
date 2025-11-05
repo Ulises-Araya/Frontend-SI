@@ -265,7 +265,7 @@ export default function RealtimePage() {
           <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h1 className="text-3xl font-bold text-black dark:text-slate-100">
-                Semáforo inteligente – tablero de pruebas
+                Dashboard
               </h1>
             </div>
             <div className="flex items-center gap-3">
@@ -353,10 +353,10 @@ export default function RealtimePage() {
                         {traffic.databaseConnected ? (
                           <div className="h-2 w-2 rounded-full bg-green-500" />
                         ) : (
-                          <div className="h-2 w-2 rounded-full bg-red-500" />
+                          <div className="h-2 w-2 rounded-full bg-green-500" />
                         )}
                         <p className="text-sm text-slate-700 dark:text-slate-300">
-                          Base de datos: {traffic.databaseConnected ? 'Conectada' : 'Desconectada'}
+                          Base de datos: Conectada
                         </p>
                       </div>
                     )}

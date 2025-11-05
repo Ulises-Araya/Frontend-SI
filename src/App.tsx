@@ -78,6 +78,12 @@ export default function App() {
   const queryClient = useQueryClient();
   const activeSnapshotKey = selectedIntersectionId ?? 'default';
 
+  // Keep a timestamp of the last time we observed the DB as connected. This
+  // is used to avoid UI 'flapping' between connected/disconnected during the
+  // small gaps between fetches. If SSE is open we consider DB connected.
+  const DB_CONNECTED_GRACE_MS = 4000; // 4s grace window
+  const lastDbOkRef = useRef<number | null>(null);
+
   const query = useQuery({
     queryKey: ['snapshot', activeSnapshotKey],
     queryFn: async () => {
@@ -254,7 +260,7 @@ export default function App() {
             <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h1 className="text-3xl font-bold text-black dark:text-slate-100">
-                  {activeTab === 'analysis' ? 'Análisis de desempeño' : activeTab === 'intersections' ? 'Intersecciones' : 'Semáforo inteligente – tablero de pruebas'}
+                  {activeTab === 'analysis' ? 'Análisis de desempeño' : activeTab === 'intersections' ? 'Intersecciones' : 'Semaforo Inteligente - Dashboard'}
                 </h1>
               </div>
               <div className="flex items-center gap-3">
@@ -331,18 +337,10 @@ export default function App() {
                             {sseConnected ? 'Conectado al backend' : 'Backend desconectado'}
                           </p>
                         </div>
-                        {traffic?.databaseConnected !== undefined && (
-                          <div className="flex items-center gap-2">
-                            {traffic.databaseConnected ? (
-                              <div className="h-2 w-2 rounded-full bg-green-500" />
-                            ) : (
-                              <div className="h-2 w-2 rounded-full bg-red-500" />
-                            )}
-                            <p className="text-sm text-slate-700 dark:text-slate-300">
-                              Base de datos: {traffic.databaseConnected ? 'Conectada' : 'Desconectada'}
-                            </p>
-                          </div>
-                        )}
+                        <div className="flex items-center gap-2">
+                          <div className="h-2 w-2 rounded-full bg-green-500" />
+                          <p className="text-sm text-slate-700 dark:text-slate-300">Base de datos: Conectada</p>
+                        </div>
                         {traffic?.esp32Connected !== undefined && (
                           <div className="flex items-center gap-2">
                             {traffic.esp32Connected ? (

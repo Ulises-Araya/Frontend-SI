@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom';
 import { LayoutGrid, LineChart, MapPinned, ArrowLeft, Sun, Moon, LogOut, Menu } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import Analysis from '../components/Analysis';
+import { useIntersections } from '../api/intersections';
 
 export default function AnalysisPage() {
   const [isDarkMode, setIsDarkMode] = useState(() => {
@@ -12,6 +14,28 @@ export default function AnalysisPage() {
   };
   const [sidebarVisible, setSidebarVisible] = useState(false);
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
+
+  const [selectedIntersectionId] = useState<string | null>(() => {
+    // Support both keys used across the app: 'selectedIntersection' (object) and 'selectedIntersectionId' (string)
+    try {
+      const raw = localStorage.getItem('selectedIntersection');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed.id === 'string') return parsed.id;
+      }
+    } catch (e) {
+      // ignore
+    }
+    const byId = localStorage.getItem('selectedIntersectionId');
+    return byId ?? null;
+  });
+
+  const intersectionsQuery = useIntersections(selectedIntersectionId ? { ids: [selectedIntersectionId] } : {} , { staleTime: 30_000 });
+
+  const intersectionName = useMemo(() => {
+    const first = intersectionsQuery.data?.intersections?.[0];
+    return first?.name ?? undefined;
+  }, [intersectionsQuery.data]);
 
   const handleLogout = () => {
     localStorage.removeItem('isAuthenticated');
@@ -137,81 +161,8 @@ export default function AnalysisPage() {
             </div>
           </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8">
-          <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-card border border-slate-200 dark:border-slate-700">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
-                <LayoutGrid className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-              </div>
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-                Flujo de Vehículos
-              </h3>
-            </div>
-            <p className="text-slate-600 dark:text-slate-400">
-              Análisis del flujo vehicular por hora y día de la semana.
-            </p>
-            <div className="mt-4 text-sm text-slate-500 dark:text-slate-500">
-              Próximamente disponible
-            </div>
-            <iframe
-              src="https://app.powerbi.com/view?r=tu-enlace-flujo-vehicular"
-              width="100%"
-              height="300"
-              frameBorder="0"
-              allowFullScreen={true}
-              className="rounded-lg mt-4"
-            ></iframe>
-          </div>
-
-          <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-card border border-slate-200 dark:border-slate-700">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
-                <LineChart className="h-6 w-6 text-green-600 dark:text-green-400" />
-              </div>
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-                Eficiencia del Sistema
-              </h3>
-            </div>
-            <p className="text-slate-600 dark:text-slate-400">
-              Métricas de rendimiento y optimización del sistema de semáforos.
-            </p>
-            <div className="mt-4 text-sm text-slate-500 dark:text-slate-500">
-              Próximamente disponible
-            </div>
-            <iframe
-              src="https://app.powerbi.com/view?r=tu-enlace-eficiencia"
-              width="100%"
-              height="300"
-              frameBorder="0"
-              allowFullScreen={true}
-              className="rounded-lg mt-4"
-            ></iframe>
-          </div>
-
-          <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-card border border-slate-200 dark:border-slate-700">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 bg-purple-100 dark:bg-purple-900 rounded-lg">
-                <MapPinned className="h-6 w-6 text-purple-600 dark:text-purple-400" />
-              </div>
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-                Patrones de Congestión
-              </h3>
-            </div>
-            <p className="text-slate-600 dark:text-slate-400">
-              Identificación de patrones de tráfico y puntos de congestión.
-            </p>
-            <div className="mt-4 text-sm text-slate-500 dark:text-slate-500">
-              Próximamente disponible
-            </div>
-            <iframe
-              src="https://app.powerbi.com/view?r=tu-enlace-congestion"
-              width="100%"
-              height="300"
-              frameBorder="0"
-              allowFullScreen={true}
-              className="rounded-lg mt-4"
-            ></iframe>
-          </div>
+        <div className="mb-8">
+          <Analysis intersectionId={selectedIntersectionId} intersectionName={intersectionName} />
         </div>
 
         <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 shadow-card border border-slate-200 dark:border-slate-700">
