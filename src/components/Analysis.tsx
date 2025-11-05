@@ -15,7 +15,7 @@ import {
   Pie,
   Cell,
 } from 'recharts';
-import { BarChart3, Clock3, Gauge } from 'lucide-react';
+import { BarChart3, Gauge } from 'lucide-react';
 import { fetchAnalyticsOverview } from '../api/client';
 import type {
   AnalyticsOverview,
@@ -24,15 +24,6 @@ import type {
   PhaseTransitionCount,
   PresenceSample,
 } from '../api/types';
-
-const WAIT_BUCKETS = [
-  { label: '0-5 s', min: 0, max: 5_000 },
-  { label: '5-10 s', min: 5_000, max: 10_000 },
-  { label: '10-20 s', min: 10_000, max: 20_000 },
-  { label: '20-40 s', min: 20_000, max: 40_000 },
-  { label: '40-60 s', min: 40_000, max: 60_000 },
-  { label: '> 60 s', min: 60_000, max: Number.POSITIVE_INFINITY },
-];
 
 const LANE_COLORS = ['#2563eb', '#16a34a', '#f59e0b', '#dc2626'];
 
@@ -57,30 +48,6 @@ function buildTransitionDataset(transitionCounts: PhaseTransitionCount[], laneKe
       changes: toGreen?.count ?? 0,
     };
   });
-}
-
-function buildWaitHistogram(samples: PresenceSample[], laneKeys: string[]) {
-  const buckets = WAIT_BUCKETS.map((bucket) => {
-    const entry: Record<string, number | string> = { bucket: bucket.label };
-    laneKeys.forEach((laneKey) => {
-      entry[laneKey] = 0;
-    });
-    return entry;
-  });
-
-  samples.forEach((sample) => {
-    const bucket = WAIT_BUCKETS.find((range) => sample.waitMs >= range.min && sample.waitMs < range.max);
-    if (!bucket) {
-      return;
-    }
-    const entry = buckets.find((item) => item.bucket === bucket.label);
-    if (!entry) {
-      return;
-    }
-    entry[sample.laneKey] = (entry[sample.laneKey] as number) + 1;
-  });
-
-  return buckets;
 }
 
 function buildDurationDataset(laneDurations: LaneDurationSummary[]) {
@@ -130,50 +97,10 @@ export function Analysis({ intersectionId, intersectionName }: { intersectionId?
 
   const laneKeys = useMemo(() => buildLaneKeys(analyticsQuery.data), [analyticsQuery.data]);
 
-  const presenceSamples = analyticsQuery.data?.presenceSamples ?? [];
-
   const rawTransitionDataset = useMemo(
     () => buildTransitionDataset(analyticsQuery.data?.transitionCounts ?? [], laneKeys),
     [analyticsQuery.data?.transitionCounts, laneKeys],
   );
-
-  const [presenceEventsCount, setPresenceEventsCount] = useState(0);
-  const presenceTrackerRef = useRef<{
-    intersectionKey: string;
-    seen: Set<string>;
-    total: number;
-  }>({
-    intersectionKey: '__init__',
-    seen: new Set<string>(),
-    total: 0,
-  });
-
-  useEffect(() => {
-    const intersectionKey = intersectionId ?? '__default__';
-    const tracker = presenceTrackerRef.current;
-    const shouldReset = tracker.intersectionKey !== intersectionKey;
-    if (shouldReset) {
-      tracker.intersectionKey = intersectionKey;
-      tracker.total = 0;
-      tracker.seen = new Set<string>();
-    }
-
-    let changed = shouldReset;
-    for (const sample of presenceSamples) {
-      const uniqueKey = `${sample.laneKey}::${sample.detectedAt}`;
-      if (!tracker.seen.has(uniqueKey)) {
-        tracker.seen.add(uniqueKey);
-        tracker.total += 1;
-        changed = true;
-      }
-    }
-
-    if (changed) {
-      setPresenceEventsCount(tracker.total);
-    }
-  }, [presenceSamples, intersectionId]);
-
-  const displayedPresenceEvents = Math.max(presenceEventsCount, presenceSamples.length);
 
   const [cumulativeTransitionCounts, setCumulativeTransitionCounts] = useState<Record<string, number>>({});
   const transitionTrackerRef = useRef<{
@@ -241,11 +168,6 @@ export function Analysis({ intersectionId, intersectionName }: { intersectionId?
     return laneKeys.reduce((accumulator, laneKey) => accumulator + (cumulativeTransitionCounts[laneKey] ?? 0), 0);
   }, [totalTransitionsFromApi, laneKeys, cumulativeTransitionCounts, rawTransitionDataset]);
 
-  const waitHistogramDataset = useMemo(
-    () => buildWaitHistogram(presenceSamples, laneKeys),
-    [presenceSamples, laneKeys],
-  );
-
   const durationDataset = useMemo(
     () => buildDurationDataset(analyticsQuery.data?.laneDurations ?? []),
     [analyticsQuery.data?.laneDurations],
@@ -279,7 +201,7 @@ export function Analysis({ intersectionId, intersectionName }: { intersectionId?
 
       {analyticsQuery.data ? (
         <div className="space-y-8">
-          <section className="grid gap-6 md:grid-cols-3">
+          <section className="grid gap-6 md:grid-cols-2">
             <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-card dark:border-slate-700 dark:bg-slate-800">
               <div className="mb-3 flex items-center gap-3">
                 <div className="rounded-lg bg-blue-100 p-2 dark:bg-blue-900">
@@ -289,17 +211,6 @@ export function Analysis({ intersectionId, intersectionName }: { intersectionId?
               </div>
               <p className="text-3xl font-semibold text-slate-900 dark:text-slate-100">
                 {totalTransitions}
-              </p>
-            </div>
-            <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-card dark:border-slate-700 dark:bg-slate-800">
-              <div className="mb-3 flex items-center gap-3">
-                <div className="rounded-lg bg-emerald-100 p-2 dark:bg-emerald-900">
-                  <Clock3 className="h-5 w-5 text-emerald-600 dark:text-emerald-300" />
-                </div>
-                <p className="text-sm font-medium text-slate-600 dark:text-slate-300">Eventos de espera analizados</p>
-              </div>
-              <p className="text-3xl font-semibold text-slate-900 dark:text-slate-100">
-                {displayedPresenceEvents}
               </p>
             </div>
             <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-card dark:border-slate-700 dark:bg-slate-800">
@@ -315,7 +226,7 @@ export function Analysis({ intersectionId, intersectionName }: { intersectionId?
             </div>
           </section>
 
-          <section className="grid gap-6 xl:grid-cols-2">
+          <section>
             <div>
               <h2 className="mb-4 text-lg font-semibold text-slate-800 dark:text-slate-100">Cambios a verde por semáforo</h2>
               <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-card dark:border-slate-700 dark:bg-slate-800">
@@ -331,28 +242,6 @@ export function Analysis({ intersectionId, intersectionName }: { intersectionId?
                       />
                       <Legend />
                       <Bar dataKey="changes" name="Pasadas a verde" fill="#0ea5e9" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <h2 className="mb-4 text-lg font-semibold text-slate-800 dark:text-slate-100">
-                Distribución de tiempo en cola
-              </h2>
-              <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-card dark:border-slate-700 dark:bg-slate-800">
-                <div className="h-72">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={waitHistogramDataset}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                      <XAxis dataKey="bucket" stroke="#475569" />
-                      <YAxis stroke="#475569" allowDecimals={false} />
-                      <Tooltip />
-                      <Legend />
-                      {laneKeys.map((laneKey, index) => (
-                        <Bar key={laneKey} dataKey={laneKey} name={`Carril ${laneKey}`} fill={LANE_COLORS[index % LANE_COLORS.length]} radius={[4, 4, 0, 0]} />
-                      ))}
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
