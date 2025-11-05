@@ -42,3 +42,6 @@ npm run preview     # sirve la build generada
 1. Levanta el backend (`npm run dev`) en la carpeta `Backend`.
 2. Desde `Frontend`, ejecuta `npm run dev`.
 3. Abre <http://localhost:5173> y comienza a enviar eventos al backend (por ejemplo desde el ESP32 o con `curl`).
+
+## Link a la pagina desplegada
+- https://frontend-si-ten.vercel.app/
