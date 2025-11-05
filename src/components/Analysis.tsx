@@ -226,6 +226,16 @@ export function Analysis({ intersectionId, intersectionName }: { intersectionId?
     }));
   }, [cumulativeTransitionCounts, laneKeys, rawTransitionDataset]);
 
+  const totalTransitions = useMemo(() => {
+    if (laneKeys.length === 0) {
+      return rawTransitionDataset.reduce((accumulator, item) => accumulator + item.changes, 0);
+    }
+    if (Object.keys(cumulativeTransitionCounts).length === 0) {
+      return rawTransitionDataset.reduce((accumulator, item) => accumulator + item.changes, 0);
+    }
+    return laneKeys.reduce((accumulator, laneKey) => accumulator + (cumulativeTransitionCounts[laneKey] ?? 0), 0);
+  }, [laneKeys, cumulativeTransitionCounts, rawTransitionDataset]);
+
   const waitHistogramDataset = useMemo(
     () => buildWaitHistogram(presenceSamples, laneKeys),
     [presenceSamples, laneKeys],
@@ -273,7 +283,7 @@ export function Analysis({ intersectionId, intersectionName }: { intersectionId?
                 <p className="text-sm font-medium text-slate-600 dark:text-slate-300">Transiciones registradas</p>
               </div>
               <p className="text-3xl font-semibold text-slate-900 dark:text-slate-100">
-                {analyticsQuery.data?.transitionCounts.reduce((acc: number, item: PhaseTransitionCount) => acc + item.count, 0) ?? 0}
+                {totalTransitions}
               </p>
             </div>
             <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-card dark:border-slate-700 dark:bg-slate-800">
